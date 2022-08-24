@@ -1,0 +1,4 @@
+shm_path = "/dev/shm/ln-dev-shm"
+
+# create and link test directory in current directory to $shm_path/test
+["./test"]
