@@ -59,7 +59,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 		file.set_len(0)?;
 		file.write_all(result.as_bytes())?;
 	}
-	copy_all("target/test", "test")?;
 	Ok(())
 }
 
