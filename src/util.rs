@@ -40,7 +40,7 @@ pub fn rand_str(size: usize) -> String {
 }
 
 pub fn find_available_name(dir: impl AsRef<Path>) -> PathBuf {
-	let mut dir = dir.as_ref();
+	let dir = dir.as_ref();
 	for len in 1..32usize {
 		for _ in 0..10 {
 			let path = dir.join(rand_str(len));
@@ -55,14 +55,12 @@ pub fn find_available_name(dir: impl AsRef<Path>) -> PathBuf {
 pub fn copy_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Box<dyn Error>> {
 	let src = src.as_ref();
 	let dst = dst.as_ref();
-	for x in src.read_dir()? {
-		if let Ok(ent) = x {
-			if ent.metadata()?.is_dir() {
-				copy_all(src.join(ent.file_name()), dst.join(ent.file_name()))?;
-			} else {
-				if let Ok(true) = dst.try_exists() {} else { create_dir_all(dst)?; }
-				copy(src.join(ent.file_name()), dst.join(ent.file_name()))?;
-			}
+	for ent in (src.read_dir()?).flatten() {
+		if ent.metadata()?.is_dir() {
+			copy_all(src.join(ent.file_name()), dst.join(ent.file_name()))?;
+		} else {
+			if let Ok(true) = dst.try_exists() {} else { create_dir_all(dst)?; }
+			copy(src.join(ent.file_name()), dst.join(ent.file_name()))?;
 		}
 	}
 	Ok(())

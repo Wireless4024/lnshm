@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 use std::env::temp_dir;
 use std::error::Error;
-use std::fs::{copy, create_dir_all, File, OpenOptions, read_link, rename, symlink_metadata};
+use std::fs::{create_dir_all, File, OpenOptions, read_link, rename};
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::path::{Component, Path, PathBuf};
+use std::path::{Path, PathBuf};
 use std::process::exit;
 
-use rand::Rng;
 use serde::{Deserialize, Serialize};
 use symlink::{remove_symlink_dir, symlink_dir};
 
