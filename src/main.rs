@@ -10,23 +10,31 @@ use rand::Rng;
 use serde::{Deserialize, Serialize};
 use symlink::{remove_symlink_dir, symlink_dir};
 
-use util::{copy_all, rand_str};
+use util::copy_all;
 
+use crate::cli::parse_args;
 use crate::util::{find_available_name, normalize};
 
 mod util;
+mod cli;
 
 fn main() -> Result<(), Box<dyn Error>> {
+	let args = parse_args();
+
 	if !PathBuf::from("config.toml").exists() {
 		#[cfg(not(target_os = "windows"))]
-			let shm_path = "/dev/shm/ln-dev-shm".to_string();
+			let shm_path = if PathBuf::from("/dev/shm").exists() {// check if /dev/shm existed otherwise use temp directory
+			"/dev/shm/ln-shm".to_string()
+		} else {
+			temp_dir().join("ln-shm").to_string_lossy().to_string()
+		};
 		#[cfg(target_os = "windows")]
 			let shm_path = {
 			// Drive R: usually mounted as ramdisk drive
 			if PathBuf::from("R:\\").exists() {
-				"R:\\ln-dev-shm".to_string()
+				"R:\\ln-shm".to_string()
 			} else {
-				temp_dir().to_string_lossy().to_string()
+				temp_dir().join("ln-shm").to_string_lossy().to_string()
 			}
 		};
 		println!("Can't find config file creating new file..");
