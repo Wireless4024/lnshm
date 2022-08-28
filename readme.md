@@ -7,6 +7,12 @@ In my machine I always use it to store build output e.g. `target` for rust or `d
 I always have to run `mkdir /ramdisk/target && ln -sf /ramdisk/target ./target` everytime I clone or create a
 project, so why not just automate it?
 
+# Installation
+> You need cargo (rust's package manager) to build
+```
+cargo install --git https://github.com/Wireless4024/lnshm
+```
+
 # Usage
 ```
 USAGE:
