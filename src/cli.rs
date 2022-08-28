@@ -1,6 +1,6 @@
 use std::env::temp_dir;
 use std::error::Error;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -46,7 +46,11 @@ impl Args {
 			dirs::home_dir().map(|it| it.join(".config/lnshm/config.toml")).unwrap_or_else(|| PathBuf::from("config.toml"))
 		};
 
-		if !PathBuf::from(&config_file).exists() {
+		let config_path = PathBuf::from(&config_file).canonicalize()?;
+		if !config_path.exists() {
+			if let Some(parent) = config_path.parent() {
+				create_dir_all(parent)?;
+			}
 			#[cfg(not(target_os = "windows"))]
 				let shm_path = if PathBuf::from("/dev/shm").exists() {// check if /dev/shm existed otherwise use temp directory
 				"/dev/shm/ln-shm".to_string()
