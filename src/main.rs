@@ -1,10 +1,8 @@
 use std::collections::HashMap;
-use std::env::temp_dir;
 use std::error::Error;
-use std::fs::{create_dir_all, File, OpenOptions, read_link, rename};
+use std::fs::{create_dir_all, OpenOptions, read_link, rename};
 use std::io::{Read, Seek, SeekFrom, Write};
-use std::path::{Path, PathBuf};
-use std::process::exit;
+use std::path::Path;
 
 use serde::{Deserialize, Serialize};
 use symlink::{remove_symlink_dir, symlink_dir};
@@ -20,33 +18,8 @@ mod cli;
 fn main() -> Result<(), Box<dyn Error>> {
 	let args = parse_args();
 
-	if !PathBuf::from("config.toml").exists() {
-		#[cfg(not(target_os = "windows"))]
-			let shm_path = if PathBuf::from("/dev/shm").exists() {// check if /dev/shm existed otherwise use temp directory
-			"/dev/shm/ln-shm".to_string()
-		} else {
-			temp_dir().join("ln-shm").to_string_lossy().to_string()
-		};
-		#[cfg(target_os = "windows")]
-			let shm_path = {
-			// Drive R: usually mounted as ramdisk drive
-			if PathBuf::from("R:\\").exists() {
-				"R:\\ln-shm".to_string()
-			} else {
-				temp_dir().join("ln-shm").to_string_lossy().to_string()
-			}
-		};
-		println!("Can't find config file creating new file..");
-		let data = Config {
-			shm_path,
-			configs: Default::default(),
-		};
-		let default_config = toml::to_string(&data)?;
-		let mut file = File::create("config.toml")?;
-		file.write_all(default_config.as_bytes())?;
-		exit(0);
-	}
-	let mut file = OpenOptions::new().read(true).write(true).open("config.example.toml")?;
+	let cfg = args.get_config()?;
+	let mut file = OpenOptions::new().read(true).write(true).open(&cfg.config_file)?;
 	let mut content = String::with_capacity(file.metadata()?.len() as _);
 	file.read_to_string(&mut content)?;
 	let mut data: Config = toml::from_str(&content).expect("Valid toml syntax in config file");
