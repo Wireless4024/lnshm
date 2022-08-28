@@ -19,6 +19,10 @@ pub(crate) struct Args {
 	#[clap(short, long)]
 	config: Option<String>,
 
+	/// Print information and exit
+	#[clap(short, long)]
+	pub info: bool,
+
 	/// Path to source directory (copy content into ramdisk on mount)
 	#[clap(short, long)]
 	pub(crate) source: Option<String>,

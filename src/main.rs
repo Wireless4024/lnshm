@@ -24,6 +24,13 @@ fn main() -> Result<(), Box<dyn Error>> {
 	let mut content = String::with_capacity(file.metadata()?.len() as _);
 	file.read_to_string(&mut content)?;
 	let mut data: Config = toml::from_str(&content).expect("Valid toml syntax in config file");
+	if args.info {
+		println!("Target <-> Source (ramdisk folder)");
+		for (path, cfg) in data.configs {
+			println!("{} <-> {}", path, cfg.source.unwrap_or_else(|| String::from("(nothing)")))
+		}
+		exit(0);
+	}
 	if let Some(target) = &args.link_target {
 		if args.remove {
 			data.unlink(target)?;
@@ -143,11 +150,13 @@ impl Config {
 		let mut folder = Path::new(".").canonicalize()?;
 		folder.push(target.as_ref());
 		let folder = normalize(&folder);
-		let link = self.configs.remove(&*folder.to_string_lossy());
+		let folder_str = folder.to_string_lossy();
+		let link = self.configs.remove(&*folder_str);
 		// link existed
 		if link.is_some() {
 			// was a symlink
 			if folder.exists() && folder.read_link().is_ok() {
+				println!("Removed link {} <-> {}", folder_str, link.unwrap().source.unwrap_or_else(|| String::from("(nothing)")));
 				remove_symlink_dir(folder)?;
 			}
 		} else {
