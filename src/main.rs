@@ -66,7 +66,12 @@ impl Config {
 	fn link(cfg: &mut LinkDirectory, path: &Path, shm_path: &str) -> Result<bool, Box<dyn Error>> {
 		let mut changed = false;
 		if let Some(source) = &cfg.source {
-			symlink_dir(source, path)?
+			if Path::new(source).exists() {
+				symlink_dir(source, path)?;
+			} else {
+				cfg.source = None;
+				return Self::link(cfg, path, shm_path);
+			}
 		} else {
 			let source = if let Some(file_name) = path.file_name().map(|it| it.to_string_lossy().to_string()) {
 				format!("{}/{}", shm_path, file_name)
