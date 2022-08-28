@@ -56,11 +56,16 @@ pub fn copy_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> Result<(), Box<
 	let src = src.as_ref();
 	let dst = dst.as_ref();
 	for ent in (src.read_dir()?).flatten() {
+		let dst_path = dst.join(ent.file_name());
+		// skip if destination already existed
+		if dst_path.exists() {
+			continue;
+		}
 		if ent.metadata()?.is_dir() {
-			copy_all(src.join(ent.file_name()), dst.join(ent.file_name()))?;
+			copy_all(src.join(ent.file_name()), dst_path)?;
 		} else {
 			if let Ok(true) = dst.try_exists() {} else { create_dir_all(dst)?; }
-			copy(src.join(ent.file_name()), dst.join(ent.file_name()))?;
+			copy(src.join(ent.file_name()), dst_path)?;
 		}
 	}
 	Ok(())
