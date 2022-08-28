@@ -36,7 +36,7 @@ pub fn normalize(p: &Path) -> PathBuf {
 
 pub fn rand_str(size: usize) -> String {
 	let mut rng = rand::thread_rng();
-	(0..size).map(|_| rng.gen_range('a'..'z')).collect()
+	(0..size).map(|_| rng.gen_range('a'..='z')).collect()
 }
 
 pub fn find_available_name(dir: impl AsRef<Path>) -> PathBuf {
