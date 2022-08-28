@@ -18,7 +18,7 @@ mod cli;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let args = parse_args();
-	let cfg = args.get_config()?;
+	let cfg = args.get_config().expect("parse config");
 
 	let mut file = OpenOptions::new().read(true).write(true).open(&cfg.config_file)?;
 	let mut content = String::with_capacity(file.metadata()?.len() as _);

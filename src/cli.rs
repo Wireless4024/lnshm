@@ -1,4 +1,4 @@
-use std::env::temp_dir;
+use std::env::{current_dir, temp_dir};
 use std::error::Error;
 use std::fs::{create_dir_all, File};
 use std::io::Write;
@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::Config;
+use crate::{Config, normalize};
 
 #[derive(Parser, Debug)]
 #[clap(version, about, long_about = None)]
@@ -39,14 +39,19 @@ pub(crate) fn parse_args() -> Args {
 impl Args {
 	pub fn get_config(&self) -> Result<InternalConfig, Box<dyn Error>> {
 		let config_file = if let Some(config) = &self.config {
-			PathBuf::from(config)
+			if config.starts_with('/') {
+				PathBuf::from(config)
+			} else {
+				normalize(&current_dir()?.join(config))
+			}
 		} else if self.system && cfg!(target_os = "linux") {
 			PathBuf::from("/etc/lnshm/config.toml")
 		} else {
 			dirs::home_dir().map(|it| it.join(".config/lnshm/config.toml")).unwrap_or_else(|| PathBuf::from("config.toml"))
 		};
 
-		let config_path = PathBuf::from(&config_file).canonicalize()?;
+		let config_path = normalize(&config_file);
+
 		if !config_path.exists() {
 			if let Some(parent) = config_path.parent() {
 				create_dir_all(parent)?;
