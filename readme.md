@@ -7,14 +7,21 @@ In my machine I always use it to store build output e.g. `target` for rust or `d
 I always have to run `mkdir /ramdisk/target && ln -sf /ramdisk/target ./target` everytime I clone or create a
 project, so why not just automate it?
 
-# Goal
+# Usage
+```
+USAGE:
+    lnshm [OPTIONS] [LINK_TARGET]
 
-> Note: still work in progress 😊
+ARGS:
+    <LINK_TARGET>    target folder to link to ramdisk
 
-```shell
-# mkdir /ramdisk/target && ln -sf /ramdisk/target ./target
-# replace above command with
-lnshm ./target
+OPTIONS:
+    -c, --config <CONFIG>    Path to config file
+    -h, --help               Print help information
+    -r, --remove             Unlink / remove instead of create (ignore source option)
+    -s, --source <SOURCE>    Path to source directory (copy content into ramdisk on mount)
+        --system             Run as system mode (eg. systemd hook on linux)
+    -V, --version            Print version information
 ```
 
 # Features
@@ -23,6 +30,6 @@ lnshm ./target
 + [x] Link directory
 + [x] Copy data from folder on create
     + [ ] Sync data from ramdisk back to source folder (cli)
-+ [ ] CLI
++ [x] CLI
 + [ ] pre-build binary / integrate with system
 + [ ] Unit test?

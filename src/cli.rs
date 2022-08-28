@@ -9,15 +9,27 @@ use clap::Parser;
 use crate::Config;
 
 #[derive(Parser, Debug)]
-#[clap(author, version, about, long_about = None)]
+#[clap(version, about, long_about = None)]
 pub(crate) struct Args {
 	/// Run as system mode (eg. systemd hook on linux)
-	#[clap(short, long)]
+	#[clap(long)]
 	system: bool,
 
 	/// Path to config file
 	#[clap(short, long)]
 	config: Option<String>,
+
+	/// Path to source directory (copy content into ramdisk on mount)
+	#[clap(short, long)]
+	pub(crate) source: Option<String>,
+
+	/// Unlink / remove instead of create (ignore source option)
+	#[clap(short, long)]
+	pub(crate) remove: bool,
+
+	/// target folder to link to ramdisk
+	#[clap(value_parser)]
+	pub(crate) link_target: Option<String>,
 }
 
 pub(crate) fn parse_args() -> Args {
@@ -56,9 +68,10 @@ impl Args {
 				configs: Default::default(),
 			};
 			let default_config = toml::to_string(&data)?;
-			let mut file = File::create("config.toml")?;
+			let mut file = File::create(&config_file)?;
 			file.write_all(default_config.as_bytes())?;
 		};
+
 		Ok(InternalConfig {
 			config_file
 		})

@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fs::{create_dir_all, OpenOptions, read_link, rename};
 use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
+use std::process::exit;
 
 use serde::{Deserialize, Serialize};
 use symlink::{remove_symlink_dir, symlink_dir};
@@ -17,13 +18,24 @@ mod cli;
 
 fn main() -> Result<(), Box<dyn Error>> {
 	let args = parse_args();
-
 	let cfg = args.get_config()?;
+
 	let mut file = OpenOptions::new().read(true).write(true).open(&cfg.config_file)?;
 	let mut content = String::with_capacity(file.metadata()?.len() as _);
 	file.read_to_string(&mut content)?;
 	let mut data: Config = toml::from_str(&content).expect("Valid toml syntax in config file");
-	data.apply()?;
+	if let Some(target) = &args.link_target {
+		if args.remove {
+			data.unlink(target)?;
+		} else {
+			let ld = LinkDirectory {
+				source: args.source,
+				..Default::default()
+			};
+			data.add(target, ld);
+		}
+	}
+	data.apply().expect("Apply change");
 	let result = toml::to_string(&data)?;
 	if result != content {
 		println!("Saving new configuration");
@@ -61,6 +73,7 @@ impl Config {
 		};
 		Ok(changed)
 	}
+
 	pub fn apply(&mut self) -> Result<bool, Box<dyn Error>> {
 		let shm_path = &self.shm_path;
 		if !Path::new(shm_path).exists() {
@@ -121,10 +134,32 @@ impl Config {
 		}
 		Ok(changed)
 	}
+
+	pub fn add(&mut self, target: impl AsRef<str>, cfg: LinkDirectory) {
+		self.configs.insert(target.as_ref().to_string(), cfg);
+	}
+
+	pub fn unlink(&mut self, target: impl AsRef<str>) -> Result<(), Box<dyn Error>> {
+		let mut folder = Path::new(".").canonicalize()?;
+		folder.push(target.as_ref());
+		let folder = normalize(&folder);
+		let link = self.configs.remove(&*folder.to_string_lossy());
+		// link existed
+		if link.is_some() {
+			// was a symlink
+			if folder.exists() && folder.read_link().is_ok() {
+				remove_symlink_dir(folder)?;
+			}
+		} else {
+			eprintln!("Target folder doesn't existed!");
+			exit(1);
+		}
+		Ok(())
+	}
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-struct LinkDirectory {
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct LinkDirectory {
 	/// Copy data from this folder if present
 	data: Option<String>,
 	/// Actual folder to symlink
