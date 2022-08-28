@@ -66,7 +66,7 @@ impl Config {
 	fn link(cfg: &mut LinkDirectory, path: &Path, shm_path: &str) -> Result<bool, Box<dyn Error>> {
 		let mut changed = false;
 		if let Some(source) = &cfg.source {
-			if Path::new(source).exists() {
+			if let Ok(true) = Path::new(source).try_exists() {
 				symlink_dir(source, path)?;
 			} else {
 				cfg.source = None;
@@ -96,7 +96,7 @@ impl Config {
 		for (raw_path, cfg) in &mut self.configs {
 			let path = Path::new(raw_path);
 
-			if path.exists() {
+			if let Ok(true) = path.try_exists() {
 				// check if linked correctly
 				if let Ok(meta) = read_link(path) {
 					let absolute = meta.as_path();
@@ -159,10 +159,12 @@ impl Config {
 		let link = self.configs.remove(&*folder_str);
 		// link existed
 		if link.is_some() {
-			// was a symlink
-			if folder.exists() && folder.read_link().is_ok() {
-				println!("Removed link {} <-> {}", folder_str, link.unwrap().source.unwrap_or_else(|| String::from("(nothing)")));
-				remove_symlink_dir(folder)?;
+			if let Ok(true) = folder.try_exists() {
+				// was a symlink
+				if folder.read_link().is_ok() {
+					println!("Removed link {} <-> {}", folder_str, link.unwrap().source.unwrap_or_else(|| String::from("(nothing)")));
+					remove_symlink_dir(folder)?;
+				}
 			}
 		} else {
 			eprintln!("Target folder doesn't existed!");
