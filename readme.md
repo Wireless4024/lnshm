@@ -22,12 +22,15 @@ ARGS:
     <LINK_TARGET>    target folder to link to ramdisk
 
 OPTIONS:
-    -c, --config <CONFIG>    Path to config file
-    -h, --help               Print help information
-    -r, --remove             Unlink / remove instead of create (ignore source option)
-    -s, --source <SOURCE>    Path to source directory (copy content into ramdisk on mount)
-        --system             Run as system mode (eg. systemd hook on linux)
-    -V, --version            Print version information
+    -c, --config <CONFIG>         Path to config file
+        --generate <GENERATOR>    Generate completion script [possible values: bash, elvish, fish,
+                                  powershell, zsh]
+    -h, --help                    Print help information
+    -i, --info                    Print information and exit
+    -r, --remove                  Unlink / remove instead of create (ignore source option)
+    -s, --source <SOURCE>         Path to source directory (copy content into ramdisk on mount)
+        --system                  Run as system mode (eg. systemd hook on linux)
+    -V, --version                 Print version information
 ```
 
 # Features

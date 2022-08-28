@@ -1,22 +1,27 @@
 use std::env::{current_dir, temp_dir};
 use std::error::Error;
-use std::fs::{create_dir_all, File};
+use std::fs::{create_dir_all, File, OpenOptions};
+use std::io;
 use std::io::Write;
-use std::path::PathBuf;
+use std::path::{PathBuf};
 
-use clap::Parser;
+use clap::{Command, CommandFactory, Parser, ValueHint};
+use clap_complete::{generate, Generator, Shell};
 
 use crate::{Config, normalize};
 
 #[derive(Parser, Debug)]
 #[clap(version, about, long_about = None)]
 pub(crate) struct Args {
+	/// Generate completion script
+	#[clap(long = "generate", value_enum)]
+	generator: Option<Shell>,
 	/// Run as system mode (eg. systemd hook on linux)
 	#[clap(long)]
 	system: bool,
 
 	/// Path to config file
-	#[clap(short, long)]
+	#[clap(short, long, value_hint = ValueHint::DirPath)]
 	config: Option<String>,
 
 	/// Print information and exit
@@ -24,7 +29,7 @@ pub(crate) struct Args {
 	pub info: bool,
 
 	/// Path to source directory (copy content into ramdisk on mount)
-	#[clap(short, long)]
+	#[clap(short, long, value_hint = ValueHint::DirPath)]
 	pub(crate) source: Option<String>,
 
 	/// Unlink / remove instead of create (ignore source option)
@@ -32,12 +37,36 @@ pub(crate) struct Args {
 	pub(crate) remove: bool,
 
 	/// target folder to link to ramdisk
-	#[clap(value_parser)]
+	#[clap(value_parser, value_hint = ValueHint::DirPath)]
 	pub(crate) link_target: Option<String>,
 }
 
 pub(crate) fn parse_args() -> Args {
-	Args::parse()
+	let args: Args = Args::parse();
+	if let Some(generator) = args.generator {
+		let mut cmd = Args::command();
+		if generator == Shell::Bash {
+			eprintln!("Saving completion file to ~.local/share/bash-completion/completions");
+		} else {
+			eprintln!("Generating completion file for {:?}...", generator);
+		}
+		print_completions(generator, &mut cmd, if generator == Shell::Bash { Some(dirs::home_dir().expect("Home dir").join(".local/share/bash-completion/completions/lnshm")) } else { None });
+	}
+	args
+}
+
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command, save: Option<PathBuf>) {
+	if let Some(save) = save {
+		let mut file = if let Ok(true) = save.try_exists() {
+			OpenOptions::new().write(true).truncate(true).open(save).expect("Open completion file")
+		} else {
+			create_dir_all(save.parent().expect("parent dir")).expect("Create completion folder");
+			File::create(save).expect("Open completion file")
+		};
+		generate(gen, cmd, cmd.get_name().to_string(), &mut file);
+	} else {
+		generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+	}
 }
 
 impl Args {
