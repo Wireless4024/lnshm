@@ -1,4 +1,4 @@
-# lnshm (WIP)
+# lnshm
 
 Have you ever use `/dev/shm`? It's pre-mounted ram drive in linux with capacity of `MAX_RAM / 2`.
 In my machine it's fast as `1.2 GiB/s` per core. but almost-infinity endurance and delete when your pc restart.
