@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::fs::{create_dir_all, OpenOptions, read_link, rename};
-use std::io::{Read, Seek, SeekFrom, Write};
+use std::fs::{create_dir_all, OpenOptions, read_link, remove_file, rename};
+use std::io::{ErrorKind, Read, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::process::exit;
 
@@ -80,7 +80,15 @@ impl Config {
 			};
 			create_dir_all(&source)?;
 			changed = true;
-			symlink_dir(&source, path)?;
+			if let Err(err) = symlink_dir(&source, path) {
+				match err.kind() {
+					ErrorKind::AlreadyExists => {
+						remove_file(path)?;
+						symlink_dir(&source, path)?;
+					}
+					_ => {}
+				}
+			};
 			cfg.source = Some(source);
 		};
 		Ok(changed)
